@@ -12,6 +12,9 @@ use rp_pico::{entry, hal, pac};
 // PWM
 use embedded_hal::PwmPin;
 
+// led
+use embedded_hal::digital::v2::OutputPin;
+
 // SSD1306 driver
 use embedded_graphics::{
     mono_font::{ascii::FONT_9X18_BOLD, MonoTextStyleBuilder},
@@ -58,6 +61,13 @@ fn main() -> ! {
     let timer = hal::Timer::new(pac.TIMER, &mut pac.RESETS);
     let mut delay = timer.count_down();
 
+    // LED setup ====================================
+    let mut led_pin = pins.gpio15.into_push_pull_output();
+    led_pin.set_high().unwrap();
+    delay.start(500.millis());
+    nb::block!(delay.wait()).unwrap();
+    led_pin.set_low().unwrap();
+
 
     // ADC setup ====================================
     let mut adc = hal::Adc::new(pac.ADC, &mut pac.RESETS);
@@ -103,6 +113,13 @@ fn main() -> ! {
         // servo output
         let duty: u16 = (4095u16 - pin_adc_counts) * 4u16 + 2500u16;
         channel.set_duty(duty);
+
+        // led output
+        if duty > 4500 {
+            led_pin.set_high().unwrap();
+        } else {
+            led_pin.set_low().unwrap();
+        }
 
         // display output
         buf.write_fmt(format_args!("Servo: {}", duty)).unwrap();
