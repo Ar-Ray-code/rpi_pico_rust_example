@@ -1,7 +1,10 @@
 #![no_std]
 #![no_main]
 
-use panic_halt as _;
+use defmt::*;   // `defmt`クレートが提供するデバッグプリント機能を使う
+use defmt_rtt as _; // `defmt`の出力チャンネルをSWD経由で出力する"RTT"にする
+use panic_probe as _;   // `panic`時にデバッグヒント情報を出力する
+
 use core::fmt::Write;
 
 use embedded_hal::{adc::OneShot, timer::CountDown};
@@ -62,7 +65,7 @@ fn main() -> ! {
     let mut delay = timer.count_down();
 
     // LED setup ====================================
-    let mut led_pin = pins.gpio15.into_push_pull_output();
+    let mut led_pin = pins.gpio14.into_push_pull_output();
     led_pin.set_high().unwrap();
     delay.start(500.millis());
     nb::block!(delay.wait()).unwrap();
@@ -95,13 +98,14 @@ fn main() -> ! {
 
     // Servo setup ====================================
     let mut pwm_slices = hal::pwm::Slices::new(pac.PWM, &mut pac.RESETS);
-    let pwm = &mut pwm_slices.pwm0;
+    let pwm = &mut pwm_slices.pwm7;
     pwm.set_ph_correct();
 
     pwm.set_div_int(PWM_50_HZ);
     pwm.enable();
     let channel = &mut pwm.channel_b;
-    channel.output_to(pins.gpio1);
+    channel.output_to(pins.gpio15);
+    info!("PWM setup done");
 
     // Main loop ====================================
     loop {
@@ -109,6 +113,8 @@ fn main() -> ! {
         display.clear();
 
         let pin_adc_counts: u16 = adc.read(&mut adc_pin_0).unwrap();
+
+        info!("ADC: {}", pin_adc_counts);
 
         // servo output
         let duty: u16 = (4095u16 - pin_adc_counts) * 4u16 + 2500u16;
