@@ -136,6 +136,7 @@ fn mythread_1 () -> ! {
 
 fn mythread_2 () -> ! {
     info!("Hello from thread 2");
+    // TODO: Set GPIO and use them
     loop {
         unsafe {
             info!("ADC: {}", ADC_READ);
