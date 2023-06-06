@@ -140,8 +140,7 @@ fn display_thread() -> ! {
     }
 }
 
-#[entry]
-fn main() -> ! {
+fn setup_gpio() {
     let cp = cortex_m::Peripherals::take().unwrap();
     let mut syst = cp.SYST;
 
@@ -224,7 +223,12 @@ fn main() -> ! {
         PWM_CHANNEL_B = Some(channel);
     }
 
-    // Thread setup ====================================
+}
+
+#[entry]
+fn main() -> ! {
+    setup_gpio();
+
     let mut stack1 = [0xDEADBEEF; 512];
     let mut stack2 = [0xDEADBEEF; 512];
     let mut stack3 = [0xDEADBEEF; 512];
