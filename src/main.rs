@@ -1,19 +1,19 @@
 #![no_std]
 #![no_main]
 
-use defmt::*; // `defmt`クレートが提供するデバッグプリント機能を使う
-use defmt_rtt as _; // `defmt`の出力チャンネルをSWD経由で出力する"RTT"にする
-use panic_probe as _; // `panic`時にデバッグヒント情報を出力する
+use defmt::*;
+use defmt_rtt as _;
+use panic_probe as _;
 
 use core::fmt::Write;
 
-use embedded_hal::{adc::OneShot, timer::CountDown};
-use fugit::{ExtU32, RateExtU32};
+use embedded_hal::{adc::OneShot};
+use fugit::{RateExtU32};
 
 use rp_pico::{
     entry,
     hal::{self, gpio::Function},
-    pac::{self, ADC},
+    pac::{self},
 };
 
 // PWM
@@ -36,7 +36,7 @@ use fmtbuf::FmtBuf;
 
 // thread setup
 use cortex_m::peripheral::syst::SystClkSource;
-use cortexm_threads::{create_thread, create_thread_with_config, init, sleep};
+use cortexm_threads::{create_thread_with_config, init, sleep};
 
 // global variables
 static mut ADC_READ: u16 = 0u16;
@@ -229,9 +229,9 @@ fn main() -> ! {
     let mut stack2 = [0xDEADBEEF; 512];
     let mut stack3 = [0xDEADBEEF; 512];
 
-    let _ = create_thread(&mut stack1, adc_read_thread);
-    let _ = create_thread(&mut stack2, pwm_led_thread);
-    let _ = create_thread(&mut stack3, display_thread);
+    let _ = create_thread_with_config(&mut stack1, adc_read_thread, 1, true);
+    let _ = create_thread_with_config(&mut stack2, pwm_led_thread, 2, true);
+    let _ = create_thread_with_config(&mut stack3, display_thread, 3, true);
 
     init();
 }
